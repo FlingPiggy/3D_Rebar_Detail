@@ -73,13 +73,13 @@ function arrayOffsets(array: RebarArray): THREE.Vector3[] {
       const angle = i * angleStep
       const cos = Math.cos(angle)
       const sin = Math.sin(angle)
-      // Rotate point (cx, cy) → (cos*cx - sin*cy, sin*cx + cos*cy) then subtract original center
-      const nx = cos * cx - sin * cy
-      const ny = sin * cx + cos * cy
+      // Rotate origin around center: result = center + R(θ)*(origin-center)
+      const dx = cx * (1 - cos) + cy * sin
+      const dy = cy * (1 - cos) - cx * sin
       switch (array.axis) {
-        case 'Z': offsets.push(new THREE.Vector3(nx - cx, ny - cy, 0)); break
-        case 'X': offsets.push(new THREE.Vector3(0, nx - cx, ny - cy)); break
-        case 'Y': offsets.push(new THREE.Vector3(nx - cx, 0, ny - cy)); break
+        case 'Z': offsets.push(new THREE.Vector3(dx, dy, 0)); break
+        case 'X': offsets.push(new THREE.Vector3(0, dx, dy)); break
+        case 'Y': offsets.push(new THREE.Vector3(dx, 0, dy)); break
       }
     }
     return offsets
@@ -120,7 +120,7 @@ function makeSpiralTube(rg: RebarGroup & { array: Extract<RebarGroup['array'], {
     const angle = t * totalAngle
     const x = rg.origin[0] + arr.center[0] + Math.cos(angle) * arr.radius
     const y = rg.origin[1] + arr.center[1] + Math.sin(angle) * arr.radius
-    const z = arr.startZ + t * arr.turns * arr.pitch
+    const z = rg.origin[2] + arr.startZ + t * arr.turns * arr.pitch
     points.push(new THREE.Vector3(x, y, z))
   }
 
