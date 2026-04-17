@@ -93,7 +93,7 @@ function arrayOffsets(array: RebarArray): THREE.Vector3[] {
 
 function makeTube(points: THREE.Vector3[], color: string): THREE.Mesh | null {
   if (points.length < 2) return null
-  // Deduplicate consecutive identical points to avoid CatmullRomCurve3 issues
+  // Deduplicate consecutive identical points
   const unique: THREE.Vector3[] = [points[0]]
   for (let i = 1; i < points.length; i++) {
     if (points[i].distanceTo(unique[unique.length - 1]) > 0.01) {
@@ -102,9 +102,14 @@ function makeTube(points: THREE.Vector3[], color: string): THREE.Mesh | null {
   }
   if (unique.length < 2) return null
 
-  const curve = new THREE.CatmullRomCurve3(unique)
+  // Use LineCurve3 segments so polyline corners stay sharp (not splined)
+  const path = new THREE.CurvePath<THREE.Vector3>()
+  for (let i = 0; i < unique.length - 1; i++) {
+    path.add(new THREE.LineCurve3(unique[i], unique[i + 1]))
+  }
+
   const segments = Math.max(unique.length * 4, 8)
-  const geo = new THREE.TubeGeometry(curve, segments, TUBE_RADIUS, 6, false)
+  const geo = new THREE.TubeGeometry(path, segments, TUBE_RADIUS, 6, false)
   const mat = new THREE.MeshPhongMaterial({ color: new THREE.Color(color) })
   return new THREE.Mesh(geo, mat)
 }
