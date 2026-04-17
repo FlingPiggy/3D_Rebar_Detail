@@ -10,7 +10,8 @@ export type ViewPreset = 'iso' | 'top' | 'front' | 'side'
 export class SceneManager {
   private renderer: THREE.WebGLRenderer
   private scene: THREE.Scene
-  private camera: THREE.PerspectiveCamera
+  /** Exposed so Viewport can use it for raycasting during snap-align. */
+  camera: THREE.PerspectiveCamera
   private controls: OrbitControls
   private animId = 0
 

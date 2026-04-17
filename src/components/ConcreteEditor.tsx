@@ -3,7 +3,8 @@ import NumInput from './NumInput'
 import type { ConcreteElement } from '../types'
 
 export default function ConcreteEditor() {
-  const { model, selectedId, updateConcrete, removeConcrete, setSelectedId } = useModelStore()
+  const { model, selectedId, updateConcrete, removeConcrete, setSelectedId,
+          alignMode, alignElementId, startAlign, cancelAlign } = useModelStore()
   const el = model.concrete.find((c) => c.id === selectedId)
   if (!el) return null
 
@@ -98,6 +99,30 @@ export default function ConcreteEditor() {
             className="w-full accent-blue-500"
           />
         </label>
+      </div>
+
+      {/* ── Snap Align ── */}
+      <div className="border-t border-neutral-800 pt-2">
+        {alignMode === null ? (
+          <button
+            onClick={() => startAlign(el.id)}
+            className="w-full py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded text-neutral-300"
+          >
+            Snap Align…
+          </button>
+        ) : alignElementId === el.id ? (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-blue-400">
+              {alignMode === 'source' ? 'Click source point in viewport…' : 'Click target point…'}
+            </span>
+            <button
+              onClick={cancelAlign}
+              className="text-xs text-neutral-500 hover:text-neutral-200 ml-2"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   )
