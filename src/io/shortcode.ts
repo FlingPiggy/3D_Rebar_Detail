@@ -5,9 +5,12 @@ import type { Model } from '../types'
 export function encode(model: Model): string {
   const json = JSON.stringify(model)
   const compressed = pako.deflate(json)
-  // Convert Uint8Array to base64
+  // Chunk the conversion to avoid call stack limits on large arrays
   let binary = ''
-  compressed.forEach((b) => (binary += String.fromCharCode(b)))
+  const chunkSize = 0x8000
+  for (let i = 0; i < compressed.length; i += chunkSize) {
+    binary += String.fromCharCode(...compressed.slice(i, i + chunkSize))
+  }
   return btoa(binary)
 }
 
