@@ -18,6 +18,7 @@ export default function Viewport() {
 
   const model = useModelStore((s) => s.model)
   const selectedId = useModelStore((s) => s.selectedId)
+  const showEdges = useModelStore((s) => s.showEdges)
   const alignMode = useModelStore((s) => s.alignMode)
   const alignSource = useModelStore((s) => s.alignSource)
   const { setAlignSource, applyAlign, cancelAlign } = useModelStore.getState()
@@ -41,8 +42,8 @@ export default function Viewport() {
 
   // ── Re-render on model change ─────────────────────────────────────────────
   useEffect(() => {
-    sceneRef.current?.setModel(model)
-  }, [model])
+    sceneRef.current?.setModel(model, showEdges)
+  }, [model, showEdges])
 
   // ── Anchor marker ─────────────────────────────────────────────────────────
   useEffect(() => {

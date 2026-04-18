@@ -6,6 +6,8 @@ import { sampleModel } from '../examples/sampleModel'
 
 export default function TopBar() {
   const { model, setModel } = useModelStore()
+  const showEdges = useModelStore((s) => s.showEdges)
+  const setShowEdges = useModelStore((s) => s.setShowEdges)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showLoadDialog, setShowLoadDialog] = useState(false)
   const [codeInput, setCodeInput] = useState('')
@@ -87,6 +89,20 @@ export default function TopBar() {
             {label}
           </button>
         ))}
+
+        <div className="w-px h-5 bg-neutral-700 mx-1" />
+
+        <button
+          onClick={() => setShowEdges(!showEdges)}
+          title={showEdges ? 'Hide outline edges' : 'Show outline edges'}
+          className={`px-2.5 py-1 border rounded ${
+            showEdges
+              ? 'bg-neutral-700 border-neutral-600 text-neutral-100'
+              : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-neutral-200'
+          }`}
+        >
+          Edges
+        </button>
 
         <input
           ref={fileInputRef}

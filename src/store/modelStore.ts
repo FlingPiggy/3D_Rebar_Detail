@@ -6,6 +6,9 @@ interface ModelStore {
   model: Model
   selectedId: string | null
 
+  // ── View prefs ────────────────────────────────────────────────────────────
+  showEdges: boolean
+
   // ── Snap-align state ──────────────────────────────────────────────────────
   alignMode: null | 'source' | 'target'
   alignElementId: string | null
@@ -13,6 +16,7 @@ interface ModelStore {
 
   setModel: (m: Model) => void
   setSelectedId: (id: string | null) => void
+  setShowEdges: (v: boolean) => void
 
   updateConcrete: (id: string, patch: Partial<ConcreteElement>) => void
   addConcrete: (el: ConcreteElement) => void
@@ -37,12 +41,14 @@ interface ModelStore {
 export const useModelStore = create<ModelStore>((set) => ({
   model: sampleModel,
   selectedId: null,
+  showEdges: true,
   alignMode: null,
   alignElementId: null,
   alignSource: null,
 
   setModel: (m) => set({ model: m }),
   setSelectedId: (id) => set({ selectedId: id }),
+  setShowEdges: (v) => set({ showEdges: v }),
 
   updateConcrete: (id, patch) =>
     set((s) => ({

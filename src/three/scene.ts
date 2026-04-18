@@ -65,7 +65,7 @@ export class SceneManager {
   }
 
   /** Replace model geometry. Called whenever the Zustand model changes. */
-  setModel(model: Model): void {
+  setModel(model: Model, showEdges = true): void {
     // Remove and dispose old groups
     if (this.concreteGroup) {
       this.scene.remove(this.concreteGroup)
@@ -80,7 +80,7 @@ export class SceneManager {
       })
     }
 
-    this.concreteGroup = buildConcreteMeshes(model.concrete)
+    this.concreteGroup = buildConcreteMeshes(model.concrete, showEdges)
     this.rebarGroup = buildRebarMeshes(model.rebarGroups)
     this.scene.add(this.concreteGroup, this.rebarGroup)
   }

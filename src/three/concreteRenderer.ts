@@ -5,13 +5,16 @@ import { geoCenterWorld } from './concreteGeometry'
 const DEG2RAD = Math.PI / 180
 
 /** Build a Three.js Group containing meshes for all concrete elements. */
-export function buildConcreteMeshes(elements: ConcreteElement[]): THREE.Group {
+export function buildConcreteMeshes(
+  elements: ConcreteElement[],
+  showEdges = true,
+): THREE.Group {
   const group = new THREE.Group()
   group.name = 'concrete'
 
   for (const el of elements) {
     if (!el.visible) continue
-    const mesh = buildSingleConcrete(el)
+    const mesh = buildSingleConcrete(el, showEdges)
     mesh.userData.id = el.id
     group.add(mesh)
   }
@@ -21,7 +24,7 @@ export function buildConcreteMeshes(elements: ConcreteElement[]): THREE.Group {
 
 // ── Single element ──────────────────────────────────────────────────────────
 
-function buildSingleConcrete(el: ConcreteElement): THREE.Group {
+function buildSingleConcrete(el: ConcreteElement, showEdges: boolean): THREE.Group {
   const g = new THREE.Group()
   g.name = el.id
 
@@ -45,14 +48,16 @@ function buildSingleConcrete(el: ConcreteElement): THREE.Group {
     polygonOffsetUnits: 1,
   })))
 
-  g.add(new THREE.LineSegments(
-    new THREE.EdgesGeometry(geometry),
-    new THREE.LineBasicMaterial({
-      color: new THREE.Color(el.color).multiplyScalar(1.5),
-      transparent: true,
-      opacity: Math.min(el.opacity * 3, 0.9),
-    }),
-  ))
+  if (showEdges) {
+    g.add(new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry),
+      new THREE.LineBasicMaterial({
+        color: new THREE.Color(el.color).multiplyScalar(1.5),
+        transparent: true,
+        opacity: Math.min(el.opacity * 3, 0.9),
+      }),
+    ))
+  }
 
   g.position.copy(geoCenterWorld(el))
   g.rotation.set(
