@@ -25,7 +25,7 @@ export function buildRebarMeshes(groups: RebarGroup[]): THREE.Group {
  * world-space Vector3. The anchorIndex point maps to the group origin.
  */
 function shapeTo3D(shape: RebarShape, origin: [number, number, number]): THREE.Vector3[] {
-  const anchor = shape.path[shape.anchorIndex]
+  const anchor = shape.anchorCustom ?? shape.path[shape.anchorIndex]
 
   return shape.path.map(([a, b]) => {
     const da = a - anchor[0]
@@ -91,30 +91,40 @@ function arrayOffsets(array: RebarArray): THREE.Vector3[] {
 
 // ─── tube mesh builders ───────────────────────────────────────────────────────
 
-function makeTube(points: THREE.Vector3[], color: string): THREE.Mesh | null {
+function makeTube(points: THREE.Vector3[], color: string): THREE.Group | null {
   if (points.length < 2) return null
+
   // Deduplicate consecutive identical points
   const unique: THREE.Vector3[] = [points[0]]
   for (let i = 1; i < points.length; i++) {
-    if (points[i].distanceTo(unique[unique.length - 1]) > 0.01) {
-      unique.push(points[i])
-    }
+    if (points[i].distanceTo(unique[unique.length - 1]) > 0.01) unique.push(points[i])
   }
   if (unique.length < 2) return null
 
-  // Use LineCurve3 segments so polyline corners stay sharp (not splined)
-  const path = new THREE.CurvePath<THREE.Vector3>()
+  const g = new THREE.Group()
+  const mat = new THREE.MeshPhongMaterial({ color: new THREE.Color(color) })
+
+  // One cylinder per straight segment → sharp corners, no blending
   for (let i = 0; i < unique.length - 1; i++) {
-    path.add(new THREE.LineCurve3(unique[i], unique[i + 1]))
+    const geo = new THREE.TubeGeometry(
+      new THREE.LineCurve3(unique[i], unique[i + 1]),
+      1, TUBE_RADIUS, 6, false,
+    )
+    g.add(new THREE.Mesh(geo, mat))
   }
 
-  const segments = Math.max(unique.length * 4, 8)
-  const geo = new THREE.TubeGeometry(path, segments, TUBE_RADIUS, 6, false)
-  const mat = new THREE.MeshPhongMaterial({ color: new THREE.Color(color) })
-  return new THREE.Mesh(geo, mat)
+  // Small sphere at each interior joint to fill the gap between segments
+  const sphereGeo = new THREE.SphereGeometry(TUBE_RADIUS, 6, 6)
+  for (let i = 1; i < unique.length - 1; i++) {
+    const sphere = new THREE.Mesh(sphereGeo, mat)
+    sphere.position.copy(unique[i])
+    g.add(sphere)
+  }
+
+  return g
 }
 
-function makeSpiralTube(rg: RebarGroup & { array: Extract<RebarGroup['array'], { type: 'spiral' }> }): THREE.Mesh | null {
+function makeSpiralTube(rg: RebarGroup & { array: Extract<RebarGroup['array'], { type: 'spiral' }> }): THREE.Group | null {
   const arr = rg.array
   const points: THREE.Vector3[] = []
   const totalAngle = arr.turns * 2 * Math.PI

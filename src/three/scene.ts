@@ -18,6 +18,7 @@ export class SceneManager {
   // Named groups for easy replacement
   private concreteGroup: THREE.Group | null = null
   private rebarGroup: THREE.Group | null = null
+  private anchorMarker: THREE.Group | null = null
 
   constructor(canvas: HTMLCanvasElement) {
     // Renderer
@@ -82,6 +83,41 @@ export class SceneManager {
     this.concreteGroup = buildConcreteMeshes(model.concrete)
     this.rebarGroup = buildRebarMeshes(model.rebarGroups)
     this.scene.add(this.concreteGroup, this.rebarGroup)
+  }
+
+  /** Show/hide a crosshair marker at the anchor world position. */
+  setAnchorMarker(position: THREE.Vector3 | null): void {
+    if (this.anchorMarker) {
+      this.scene.remove(this.anchorMarker)
+      this.anchorMarker.traverse((o) => {
+        if ((o as THREE.Mesh).geometry) (o as THREE.Mesh).geometry.dispose()
+      })
+      this.anchorMarker = null
+    }
+    if (!position) return
+
+    const g = new THREE.Group()
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffcc00, depthTest: false })
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xffcc00, depthTest: false })
+
+    // Central sphere
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(25, 8, 8), mat))
+
+    // Three short axis lines
+    const L = 200
+    for (const dir of [
+      new THREE.Vector3(L, 0, 0),
+      new THREE.Vector3(0, L, 0),
+      new THREE.Vector3(0, 0, L),
+    ]) {
+      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), dir])
+      g.add(new THREE.Line(geo, lineMat))
+    }
+
+    g.position.copy(position)
+    g.renderOrder = 999
+    this.scene.add(g)
+    this.anchorMarker = g
   }
 
   /** Snap camera to a view preset. */

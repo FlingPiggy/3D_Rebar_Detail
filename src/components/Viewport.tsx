@@ -17,6 +17,7 @@ export default function Viewport() {
   const sceneRef = useRef<SceneManager | null>(null)
 
   const model = useModelStore((s) => s.model)
+  const selectedId = useModelStore((s) => s.selectedId)
   const alignMode = useModelStore((s) => s.alignMode)
   const alignSource = useModelStore((s) => s.alignSource)
   const { setAlignSource, applyAlign, cancelAlign } = useModelStore.getState()
@@ -42,6 +43,18 @@ export default function Viewport() {
   useEffect(() => {
     sceneRef.current?.setModel(model)
   }, [model])
+
+  // ── Anchor marker ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const sm = sceneRef.current
+    if (!sm) return
+    if (!selectedId) { sm.setAnchorMarker(null); return }
+    const concrete = model.concrete.find((c) => c.id === selectedId)
+    if (concrete) { sm.setAnchorMarker(new THREE.Vector3(...concrete.origin)); return }
+    const rebar = model.rebarGroups.find((r) => r.id === selectedId)
+    if (rebar) { sm.setAnchorMarker(new THREE.Vector3(...rebar.origin)); return }
+    sm.setAnchorMarker(null)
+  }, [selectedId, model])
 
   // ── Snap-align click handler ──────────────────────────────────────────────
   useEffect(() => {

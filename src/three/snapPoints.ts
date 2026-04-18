@@ -1,15 +1,14 @@
 import * as THREE from 'three'
 import type { ConcreteElement } from '../types'
+import { geoCenterWorld } from './concreteGeometry'
 
 const DEG2RAD = Math.PI / 180
 
 /** Compute world-space snap points for a single concrete element:
- *  8 corners + top/bottom face centres for box,
- *  top/bottom centre + 8 perimeter points per end for cylinder. */
+ *  8 corners for box; cylinders have no snap points. */
 export function getElementSnapPoints(el: ConcreteElement): THREE.Vector3[] {
   const halfZ = el.dimensions.z / 2
-  // The renderer places the group centre at origin + (0,0,halfZ)
-  const centre = new THREE.Vector3(el.origin[0], el.origin[1], el.origin[2] + halfZ)
+  const centre = geoCenterWorld(el)
   const rotMat = new THREE.Matrix4().makeRotationFromEuler(
     new THREE.Euler(el.rotation[0] * DEG2RAD, el.rotation[1] * DEG2RAD, el.rotation[2] * DEG2RAD),
   )
@@ -19,29 +18,12 @@ export function getElementSnapPoints(el: ConcreteElement): THREE.Vector3[] {
   if (el.type === 'box') {
     const hx = el.dimensions.x / 2
     const hy = el.dimensions.y / 2
-    // 8 corners
+    // 8 corners only
     for (const sx of [-hx, hx]) for (const sy of [-hy, hy]) for (const sz of [-halfZ, halfZ]) {
       local.push(new THREE.Vector3(sx, sy, sz))
     }
-    // Top & bottom face centres
-    local.push(new THREE.Vector3(0, 0,  halfZ))
-    local.push(new THREE.Vector3(0, 0, -halfZ))
-    // Top & bottom edge midpoints
-    for (const [sx, sy] of [[-hx, 0], [hx, 0], [0, -hy], [0, hy]]) {
-      local.push(new THREE.Vector3(sx, sy,  halfZ))
-      local.push(new THREE.Vector3(sx, sy, -halfZ))
-    }
-  } else {
-    // Cylinder: top & bottom centres + 8 perimeter points each
-    const r = el.dimensions.x / 2
-    local.push(new THREE.Vector3(0, 0,  halfZ))
-    local.push(new THREE.Vector3(0, 0, -halfZ))
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * 2 * Math.PI
-      local.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r,  halfZ))
-      local.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, -halfZ))
-    }
   }
+  // Cylinders have no snap points
 
   return local.map((p) => p.applyMatrix4(rotMat).add(centre))
 }

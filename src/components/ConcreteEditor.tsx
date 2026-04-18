@@ -2,8 +2,13 @@ import { useModelStore } from '../store/modelStore'
 import NumInput from './NumInput'
 import type { ConcreteElement } from '../types'
 
+const CORNER_LABELS = [
+  '−X −Y base', '+X −Y base', '−X +Y base', '+X +Y base',
+  '−X −Y top',  '+X −Y top',  '−X +Y top',  '+X +Y top',
+]
+
 export default function ConcreteEditor() {
-  const { model, selectedId, updateConcrete, removeConcrete, setSelectedId,
+  const { model, selectedId, updateConcrete, removeConcrete, duplicateConcrete, setSelectedId,
           alignMode, alignElementId, startAlign, cancelAlign } = useModelStore()
   const el = model.concrete.find((c) => c.id === selectedId)
   if (!el) return null
@@ -30,6 +35,13 @@ export default function ConcreteEditor() {
           }`}
         >
           {el.visible ? '◉' : '○'}
+        </button>
+        <button
+          onClick={() => duplicateConcrete(el.id)}
+          title="Duplicate"
+          className="w-7 h-7 flex items-center justify-center rounded border border-neutral-700 text-neutral-400 hover:text-neutral-200"
+        >
+          ⧉
         </button>
         <button
           onClick={() => { removeConcrete(el.id); setSelectedId(null) }}
@@ -72,6 +84,62 @@ export default function ConcreteEditor() {
           <NumInput label="Y" value={el.rotation[1]} onChange={(v) => update({ rotation: [el.rotation[0], v, el.rotation[2]] })} />
           <NumInput label="Z" value={el.rotation[2]} onChange={(v) => update({ rotation: [el.rotation[0], el.rotation[1], v] })} />
         </div>
+      </div>
+
+      {/* ── Anchor / Reference Point ── */}
+      <div className="border-t border-neutral-800 pt-2 flex flex-col gap-2">
+        <p className="text-[10px] text-neutral-500 uppercase tracking-wide">Reference Point</p>
+        <div className="flex gap-1 flex-wrap">
+          {(['base', 'center', 'corner', 'custom'] as const).map((t) => {
+            const active = (!el.anchor && t === 'base') || el.anchor?.type === t
+            return (
+              <button
+                key={t}
+                onClick={() => {
+                  if (t === 'base') update({ anchor: undefined })
+                  else if (t === 'center') update({ anchor: { type: 'center' } })
+                  else if (t === 'corner') update({ anchor: { type: 'corner', cornerIndex: 0 } })
+                  else update({ anchor: { type: 'custom', custom: [0, 0, 0] } })
+                }}
+                className={`px-2 py-0.5 rounded border text-[10px] capitalize ${
+                  active
+                    ? 'border-blue-600 text-blue-400 bg-blue-950'
+                    : 'border-neutral-700 text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                {t === 'base' ? 'Base center' : t === 'center' ? 'Geo center' : t}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Corner selector */}
+        {el.anchor?.type === 'corner' && (
+          <select
+            value={el.anchor.cornerIndex ?? 0}
+            onChange={(e) => update({ anchor: { type: 'corner', cornerIndex: Number(e.target.value) } })}
+            className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-neutral-200 text-[10px]"
+          >
+            {CORNER_LABELS.map((label, i) => (
+              <option key={i} value={i}>{label}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Custom offset from geo center */}
+        {el.anchor?.type === 'custom' && (
+          <div>
+            <p className="text-[10px] text-neutral-600 mb-1">Offset from geo center (mm)</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              <NumInput label="X" value={el.anchor.custom?.[0] ?? 0}
+                onChange={(v) => update({ anchor: { type: 'custom', custom: [v, el.anchor!.custom?.[1] ?? 0, el.anchor!.custom?.[2] ?? 0] } })} />
+              <NumInput label="Y" value={el.anchor.custom?.[1] ?? 0}
+                onChange={(v) => update({ anchor: { type: 'custom', custom: [el.anchor!.custom?.[0] ?? 0, v, el.anchor!.custom?.[2] ?? 0] } })} />
+              <NumInput label="Z" value={el.anchor.custom?.[2] ?? 0}
+                onChange={(v) => update({ anchor: { type: 'custom', custom: [el.anchor!.custom?.[0] ?? 0, el.anchor!.custom?.[1] ?? 0, v] } })} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Color + Opacity ── */}

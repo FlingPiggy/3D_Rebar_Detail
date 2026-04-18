@@ -8,11 +8,19 @@ export interface Model {
   rebarGroups: RebarGroup[];
 }
 
+export interface ConcreteAnchor {
+  type: 'base' | 'center' | 'corner' | 'custom'
+  /** 0-7: bit0=+X, bit1=+Y, bit2=+Z(top). Only when type='corner'. */
+  cornerIndex?: number
+  /** Local offset from geometric center (mm). Only when type='custom'. */
+  custom?: [number, number, number]
+}
+
 export interface ConcreteElement {
   id: string;
   name: string;
   type: 'box' | 'cylinder';
-  /** Base-point in world space [x, y, z] */
+  /** World-space position of the anchor point (default anchor = base center). */
   origin: [number, number, number];
   /** box: x/y/z are three edge lengths; cylinder: x=diameter, z=height, y ignored */
   dimensions: { x: number; y: number; z: number };
@@ -21,6 +29,8 @@ export interface ConcreteElement {
   color: string;
   opacity: number;
   visible: boolean;
+  /** Which local point acts as the origin anchor. Omitted = 'base' (backward-compat). */
+  anchor?: ConcreteAnchor;
 }
 
 export interface RebarGroup {
@@ -38,8 +48,10 @@ export interface RebarShape {
   plane: 'XY' | 'XZ' | 'YZ';
   /** 2-D path points in the chosen plane, connected as a polyline */
   path: [number, number][];
-  /** Index into path[] that maps to the group origin */
+  /** Index into path[] that maps to the group origin. Ignored when anchorCustom is set. */
   anchorIndex: number;
+  /** When present, overrides anchorIndex — arbitrary 2-D point in the shape plane. */
+  anchorCustom?: [number, number];
 }
 
 export type RebarArray =
